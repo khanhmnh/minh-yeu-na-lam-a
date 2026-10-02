@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gửi em một bó hoa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Be+Vietnam+Pro:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{--bg1:#fffafb;--bg2:#ffe1ea;--pink:#d9648a;--rose:#e8667f;--paper:#ffffff;--ink:#6b3a4a;--muted:#a8788a}
+*{box-sizing:border-box;margin:0}
+body{min-height:100vh;font-family:"Be Vietnam Pro",system-ui,sans-serif;color:var(--ink);
+  background:radial-gradient(ellipse at 50% 100%,var(--bg2),var(--bg1) 70%) fixed;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px 40px}
+.stage{width:min(80vw,340px);cursor:pointer;transition:width 1.1s cubic-bezier(.3,.8,.3,1) 2.4s;-webkit-tap-highlight-color:transparent}
+.stage:focus-visible{outline:2px solid var(--pink);outline-offset:8px;border-radius:16px}
+.done .stage{width:min(52vw,210px)}
+svg{display:block;width:100%;height:auto;overflow:visible}
+.stem{fill:none;stroke:#5fae7e;stroke-width:4;stroke-linecap:round;stroke-dasharray:420;stroke-dashoffset:420;
+  transition:stroke-dashoffset 1s ease calc(var(--d)*140ms)}
+.leaf{fill:#6cc08b;transform:scale(0);transition:transform .7s ease 1.2s}
+.head{transform:scale(0);opacity:0;
+  transition:transform .9s cubic-bezier(.2,1.4,.4,1) calc(.7s + var(--d)*170ms),opacity .4s calc(.7s + var(--d)*170ms)}
+.dot{fill:#fff;stroke:#f0b8cb;stroke-width:1.5;opacity:0;transition:opacity .6s calc(1.6s + var(--d)*60ms)}
+.open .stem{stroke-dashoffset:0}
+.open .leaf{transform:scale(1)}
+.open .head{transform:scale(1);opacity:1}
+.open .dot{opacity:.92}
+.hint{font-weight:300;font-size:15px;color:var(--pink);margin-top:14px;transition:opacity .5s}
+.open .hint{opacity:0;height:0;margin:0}
+.paper{background:var(--paper);color:var(--ink);max-width:420px;width:100%;padding:34px 28px;border-radius:20px;
+  border:1px solid #ffd1dc;box-shadow:0 18px 50px rgba(217,100,138,.22);text-align:center;margin-top:10px;
+  opacity:0;transform:translateY(20px);pointer-events:none;height:0;overflow:hidden;padding-block:0;
+  transition:opacity .9s,transform .9s}
+.show .paper{opacity:1;transform:none;pointer-events:auto;height:auto;overflow:visible;padding-block:34px}
+.to,.from{font-family:"Dancing Script",cursive}
+.to{font-size:34px;line-height:1.2;margin-bottom:14px}
+.msg{font-weight:300;font-size:16px;line-height:1.75;white-space:pre-line}
+.from{font-size:26px;margin-top:20px;color:var(--rose)}
+.again{margin-top:18px;background:none;border:1px solid var(--muted);color:var(--muted);font:inherit;font-size:14px;
+  padding:8px 18px;border-radius:999px;cursor:pointer}
+.again:hover,.again:focus-visible{background:var(--ink);color:var(--paper)}
+@media (prefers-reduced-motion:reduce){*{transition-duration:.01s!important;transition-delay:0s!important}}
+</style>
+</head>
+<body id="body">
+<div class="stage" id="stage" role="button" tabindex="0" aria-label="Chạm để mở bó hoa">
+<svg viewBox="0 0 400 520" aria-hidden="true">
+  <g id="back"></g>
+  <g id="heads"></g>
+  <g id="dots"></g>
+  <!-- giấy gói -->
+  <polygon points="62,335 338,335 222,508 178,508" fill="#f4a9c1"/>
+  <polygon points="62,335 200,375 338,335 222,508 178,508" fill="#ffd0de"/>
+  <path d="M62,335 L200,375 L338,335" fill="none" stroke="#eb94b0" stroke-width="3"/>
+  <!-- nơ -->
+  <path d="M200,392 C160,360 140,400 168,424 C180,432 196,410 200,392Z" fill="#ff7fa3"/>
+  <path d="M200,392 C240,360 260,400 232,424 C220,432 204,410 200,392Z" fill="#ff7fa3"/>
+  <path d="M196,398 L170,452 L190,444 L200,466 L206,410Z" fill="#e8506e"/>
+  <path d="M204,398 L230,452 L210,444 L200,466 L194,410Z" fill="#ff93b0"/>
+  <circle cx="200" cy="398" r="10" fill="#e8506e"/>
+</svg>
+</div>
+<p class="hint" id="hint">Chạm vào bó hoa nhé 💐</p>
+
+<div class="paper" id="paper">
+  <div class="to" id="to"></div>
+  <p class="msg" id="msg"></p>
+  <div class="from" id="from"></div>
+  <button class="again" id="again">Xem lại</button>
+</div>
+
+<script>
+/* ====== SỬA Ở ĐÂY ====== */
+const TO   = "Gửi tình yêu,";
+const FROM = "— Khánh Minh";
+const MESSAGE =
+`Một chút bất ngờ nho nhỏ
+gửi đến người xinh đẹp nhấttt,
+hi vọng những bông hoa xinh xắn này
+sẽ làm em vuiiiii. 
+Yêuuuuuuu em.
+
+Chúc vợ tháng mới luôn vui vẻ, 
+nhiều sức khỏe, gặp được nhiều may mắn, 
+và mọi sự em muốn đều đạt được nhée.`;
+/* ======================= */
+
+const $ = id => document.getElementById(id);
+$("to").textContent = TO; $("msg").textContent = MESSAGE; $("from").textContent = FROM;
+
+const peonyP = "M0,2 C-34,-4 -42,-36 -14,-46 C-6,-51 6,-51 14,-46 C42,-36 34,-4 0,2Z";
+const peony = (c1, c2, c3, c4, s) => {
+  const ring = (n, rot, k, fill) => Array.from({length:n},(_, i) =>
+    `<path d="${peonyP}" fill="${fill}" stroke="${s}" stroke-width="${1.3/k}" stroke-linejoin="round" transform="rotate(${rot + i*360/n}) scale(${k})"/>`).join("");
+  return ring(8, 0, 1, c1) + ring(7, 20, .8, c2) + ring(6, 10, .6, c3) + ring(5, 35, .4, c4) +
+    `<circle r="5" fill="#ffd36e" stroke="${s}" stroke-width="1"/>`;
+};
+const tulipP = "M0,-44 C-24,-32 -26,10 0,26 C26,10 24,-32 0,-44Z";
+const tulip = (c, d) => `<path d="${tulipP}" fill="${d}" transform="rotate(-20)"/><path d="${tulipP}" fill="${d}" transform="rotate(20)"/><path d="${tulipP}" fill="${c}"/>`;
+const daisy = () => Array.from({length:12},(_, i) => `<ellipse cy="-22" rx="7" ry="20" fill="#fff" stroke="#ecc9d6" transform="rotate(${i*30})"/>`).join("") + `<circle r="11" fill="#f5b84a"/>`;
+const lav = () => Array.from({length:8},(_, i) => `<ellipse cx="${i%2?6:-6}" cy="${-i*11}" rx="5" ry="9" fill="${i%2?'#b48cf0':'#9c74e0'}" transform="rotate(${i%2?25:-25} ${i%2?6:-6} ${-i*11})"/>`).join("");
+
+// [x, y, nội dung, góc nghiêng, thân bắt đầu từ]
+const flowers = [
+  [200,185, peony("#ffe0e8","#ffc2d4","#ff9dbb","#f26d9a","#ee8cae"), 0],
+  [122,238, peony("#ffb3cf","#ff85b3","#f0538f","#d42e72","#e0518a"), -8],
+  [278,238, peony("#fff0ea","#ffd4c4","#ffb39d","#ff8f78","#f2a590"), 8],
+  [150,128, tulip("#ff9a8b","#f0735f"), -10],
+  [250,124, tulip("#ffd36e","#f0b445"), 10],
+  [200,92,  daisy(), 0],
+  [82,300,  daisy(), -12],
+  [318,300, daisy(), 12],
+  [58,236,  lav(), -14],
+  [342,236, lav(), 14]
+];
+let back = "", heads = "";
+flowers.forEach(([x, y, svg, r], i) => {
+  back += `<path class="stem" style="--d:${i}" d="M200,400 Q${(200+x)/2},${(400+y)/2 + 20} ${x},${y}"/>`;
+  heads += `<g class="head" style="--d:${i};transform-origin:${x}px ${y}px"><g transform="translate(${x} ${y}) rotate(${r})">${svg}</g></g>`;
+});
+[[130,330,-30],[270,330,30],[160,345,-60],[240,345,60]].forEach(([x, y, r]) => {
+  back += `<ellipse class="leaf" cx="${x}" cy="${y}" rx="11" ry="30" transform="rotate(${r} ${x} ${y})" style="transform-origin:${x}px ${y}px"/>`;
+});
+let dots = "", n = 0;
+[[110,170],[290,168],[95,200],[310,205],[170,60],[235,62],[135,92],[268,95],[60,280],[342,285],[200,300],[155,170],[245,172],[122,320],[280,322]].forEach(([x, y]) => {
+  [[0,0],[9,-7],[-8,-8],[5,8]].forEach(([dx, dy]) => { dots += `<circle class="dot" style="--d:${n++}" cx="${x+dx}" cy="${y+dy}" r="${3+(n%3)}"/>`; });
+});
+$("back").innerHTML = back; $("heads").innerHTML = heads; $("dots").innerHTML = dots;
+
+const body = $("body"); let timer;
+function open(){
+  if (body.classList.contains("open")) return;
+  body.classList.add("open");
+  timer = setTimeout(() => body.classList.add("done", "show"), 2600);
+}
+function reset(){
+  clearTimeout(timer);
+  body.classList.remove("open", "done", "show");
+}
+$("stage").addEventListener("click", open);
+$("stage").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } });
+$("again").addEventListener("click", reset);
+</script>
+</body>
+</html>
